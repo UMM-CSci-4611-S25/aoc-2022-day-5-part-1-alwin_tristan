@@ -1,4 +1,4 @@
-use std::{fs, io::Lines, str::{FromStr, SplitAsciiWhitespace}};
+use std::{fs, io::Lines, ops::Index, str::{FromStr, SplitAsciiWhitespace}};
 
 static INPUT_FILE: &str = "input.txt";
 
@@ -42,7 +42,7 @@ fn main() {
 pub enum ParseError {
     // Add different variants as you discover different kinds of parsing errors.
     // This could include things like too many stacks, illegal strings on a stack, etc.
-    NullError,
+    NullError, ParseIntError
 }
 
 const NUM_STACKS: usize = 9;
@@ -93,15 +93,21 @@ impl FromStr for Stacks {
     // Note that the stack numbers start at 1 and you'll need the indices
     // in `Stacks::stacks` to start at 0.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        for lines in s.lines() {
-            let mut i = s.split_ascii_whitespace();
+        let mut stacks: [Stack; 9] = Default::default();
+        for line in s.lines() {
+            let mut i = line.split_ascii_whitespace();
             let index_str = i.next().ok_or(ParseError::NullError)?;
+            let index = index_str.parse::<usize>().map_err(|_| ParseError::ParseIntError)? - 1;
+            
 
-            let stack_elements : Vec<char> = i.map(|s| s.to_string().chars().next().expect("IT\'S BROKEN ")).collect();  //parse::<char>().unwrap()
-            print!("{:?}", stack_elements);
-            //let stack_number = stack_elements.remove(0);
+            let stack_elements : Vec<char> = i.map(|s| s.chars().next().expect("IT\'S BROKEN ")).collect();  //parse::<char>().unwrap()
+            // print!("{:?}", stack_elements);
+            stacks[index] = Stack { stack: stack_elements};
+            
         }
-        todo!()
+        print!("\n stacks: {:?}\n", stacks);
+        // todo!()
+        Ok(Stacks { stacks: stacks })
     }
 }
 
