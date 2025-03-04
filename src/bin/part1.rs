@@ -1,4 +1,4 @@
-use std::{fs, io::Lines, ops::Index, str::{FromStr, SplitAsciiWhitespace}};
+use std::{fs, str::FromStr};
 
 static INPUT_FILE: &str = "input.txt";
 
@@ -65,6 +65,11 @@ impl Stacks {
     /// Return the new set of stacks, or a `CraneError` if the instruction
     /// is invalid.
     fn apply_instruction(mut self, instruction: &CraneInstruction) -> Result<Self, CraneError> {
+        let test: usize = 0;
+        for i in 1..instruction.num_to_move {
+            let temp = self.stacks[instruction.from_stack].stack.pop();
+            self.stacks[instruction.to_stack].stack.push(temp.expect("REASON"));
+        }
         todo!()
     }
 
@@ -96,16 +101,16 @@ impl FromStr for Stacks {
         let mut stacks: [Stack; 9] = Default::default();
         for line in s.lines() {
             let mut i = line.split_ascii_whitespace();
-            let index_str = i.next().ok_or(ParseError::NullError)?;
+            let index_str = i.next().ok_or(ParseError::NullError)?; // Checks if vec is something...? COME BACK TO THIS COMMENT
             let index = index_str.parse::<usize>().map_err(|_| ParseError::ParseIntError)? - 1;
             
 
-            let stack_elements : Vec<char> = i.map(|s| s.chars().next().expect("IT\'S BROKEN ")).collect();  //parse::<char>().unwrap()
+            let stack_elements : Vec<char> = i.map(|s| s.chars().next().expect("IT'S BROKEN ")).collect(); 
             // print!("{:?}", stack_elements);
             stacks[index] = Stack { stack: stack_elements};
             
         }
-        print!("\n stacks: {:?}\n", stacks);
+        //print!("\n stacks: {:?}\n", stacks);
         // todo!()
         Ok(Stacks { stacks: stacks })
     }
@@ -157,7 +162,9 @@ impl FromStr for CraneInstruction {
     // then parse into `usize` using a `map` statement. You could also just
     // "reach" into the split string directly if you find that easier.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        let i = s.split_ascii_whitespace();
+        let numbers: Vec<usize> = i.map(|s| s.parse::<usize>()).filter(|s| s.is_ok()).map(|s|s.unwrap()).collect();
+        Ok(CraneInstruction { num_to_move: numbers[0], from_stack: numbers[1], to_stack: numbers[2]  })
     }
 }
 
@@ -169,7 +176,11 @@ impl FromStr for CraneInstructions {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        let mut instructionVec: Vec<CraneInstruction> = vec![];
+        for line in s.lines() {
+            instructionVec.push(CraneInstruction::from_str(line).unwrap());
+        }
+        Ok(CraneInstructions {instructions: instructionVec})
     }
 }
 
@@ -204,7 +215,7 @@ mod tests {
 
     // Test that we can parse instructions correctly.
     #[test]
-    #[ignore = "We haven't implemented instruction parsing yet"]
+    //#[ignore = "We haven't implemented instruction parsing yet"]
     fn test_instruction_parsing() {
         let input = "move 1 from 2 to 1\nmove 3 from 1 to 3";
         let instructions: CraneInstructions = input.parse().unwrap();
@@ -227,7 +238,7 @@ mod tests {
     // Test that the instruction `move 2 from 0 to 1` works as expected with non-empty
     // stacks.
     #[test]
-    #[ignore = "We haven't implemented the `apply_instruction` method yet"]
+    // #[ignore = "We haven't implemented the `apply_instruction` method yet"]
     fn test_apply_instruction() {
         let stacks = Stacks {
             stacks: [
