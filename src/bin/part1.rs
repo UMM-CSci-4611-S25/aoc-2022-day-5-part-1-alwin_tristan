@@ -58,6 +58,7 @@ enum CraneError {
     // that can occur when applying a crane instruction.
     // This could include things like trying to move from an empty stack,
     // trying to get the top of an empty stack, etc.
+    EmptyStack
 }
 
 impl Stacks {
@@ -65,25 +66,35 @@ impl Stacks {
     /// Return the new set of stacks, or a `CraneError` if the instruction
     /// is invalid.
     fn apply_instruction(mut self, instruction: &CraneInstruction) -> Result<Self, CraneError> {
-        let test: usize = 0;
-        for i in 1..instruction.num_to_move {
-            let temp = self.stacks[instruction.from_stack].stack.pop();
-            self.stacks[instruction.to_stack].stack.push(temp.expect("REASON"));
+        for _i in 0..instruction.num_to_move {
+            let temp = self.stacks[instruction.from_stack - 1].stack.pop();
+            //print!("{:?}\n", temp);
+            self.stacks[instruction.to_stack - 1].stack.push(temp.expect("Push to new stack failed"));
         }
-        todo!()
+        Ok(self)
     }
 
     /// Perform each of these instructions in order on the set of stacks
     /// in `self`. Return the new set of stacks, or a `CraneError` if
     /// any of the instructions are invalid.
-    fn apply_instructions(self, instructions: &CraneInstructions) -> Result<Self, CraneError> {
-        todo!()
+    fn apply_instructions(mut self, instructions: &CraneInstructions) -> Result<Self, CraneError> {
+        for instruction in &instructions.instructions {
+            self = self.apply_instruction(instruction)?;
+        }
+        Ok(self)
     }
 
     /// Return a string containing the top character of each stack in order.
     /// The stacks should all be non-empty; if any is empty return a `CraneError`.
     fn tops_string(&self) -> Result<String, CraneError> {
-        todo!()
+        let mut temp_string: String = "".to_string();
+        for stack in &self.stacks {
+            if stack.len() == 0 {
+                return Err(CraneError::EmptyStack);
+            }
+            temp_string = temp_string + &stack.stack.last().unwrap().to_string();
+        }
+        Ok::<String, CraneError>(temp_string)
     }
 }
 
@@ -163,8 +174,12 @@ impl FromStr for CraneInstruction {
     // "reach" into the split string directly if you find that easier.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let i = s.split_ascii_whitespace();
+        // print!("{:?}", i);
         let numbers: Vec<usize> = i.map(|s| s.parse::<usize>()).filter(|s| s.is_ok()).map(|s|s.unwrap()).collect();
-        Ok(CraneInstruction { num_to_move: numbers[0], from_stack: numbers[1], to_stack: numbers[2]  })
+        // print!("{:?}\n", numbers[0]);
+        // print!("{:?}\n", numbers[1]);
+        // print!("{:?}\n", numbers[2]);
+        Ok(CraneInstruction { num_to_move: numbers[0], from_stack: numbers[1], to_stack: numbers[2] })
     }
 }
 
@@ -176,11 +191,15 @@ impl FromStr for CraneInstructions {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut instructionVec: Vec<CraneInstruction> = vec![];
+        let mut instruction_vec: Vec<CraneInstruction> = vec![];
         for line in s.lines() {
-            instructionVec.push(CraneInstruction::from_str(line).unwrap());
+            if line == "" {
+                break
+            }
+            instruction_vec.push(CraneInstruction::from_str(line).unwrap());
         }
-        Ok(CraneInstructions {instructions: instructionVec})
+
+        Ok(CraneInstructions {instructions: instruction_vec})
     }
 }
 
@@ -262,8 +281,8 @@ mod tests {
 
         let instruction = CraneInstruction {
             num_to_move: 2,
-            from_stack: 0,
-            to_stack: 1,
+            from_stack: 1,
+            to_stack: 2,
         };
 
         let new_stacks = stacks
@@ -276,7 +295,7 @@ mod tests {
 
     // This essentially runs `main()` and checks that the results are correct for part 1.
     #[test]
-    #[ignore = "We haven't implemented the `apply_instructions` method yet"]
+    //#[ignore = "We haven't implemented the `apply_instructions` method yet"]
     fn test_part_1() {
         let contents =
             fs::read_to_string(INPUT_FILE).expect(&format!("Failed to open file '{INPUT_FILE}'"));
